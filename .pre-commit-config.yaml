@@ -9,7 +9,9 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: ^requirements(-dev)?\.txt$
       - id: requirements-txt-fixer
+        exclude: ^requirements(-dev)?\.txt$
       - id: trailing-whitespace
         exclude: ^tests/.*data/.*$
       - id: check-json
@@ -17,7 +19,7 @@ repos:
         args: [--pytest-test-first]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.4.8
+    rev: v0.12.7
     hooks:
       # Run the linter.
       - id: ruff
@@ -31,7 +33,7 @@ repos:
       # Run the formatter.
       - id: ruff-format
   - repo: https://github.com/PyCQA/pylint
-    rev: v3.2.3
+    rev: v3.3.7
     hooks:
       - id: pylint
         args:
