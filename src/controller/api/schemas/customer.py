@@ -34,11 +34,11 @@ class CustomerDetailResponse(CustomerListDataResponse):
         examples=[
             [
                 {
-                    "address_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+                    "addressId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
                     "street": "123 Main St",
                     "city": "Anytown",
                     "country": "USA",
-                    "postal_code": "12345",
+                    "postalCode": "12345",
                 },
             ],
         ],
@@ -57,7 +57,7 @@ class CustomerCreate(BaseModel):
                     "street": "123 Main St",
                     "city": "Anytown",
                     "country": "USA",
-                    "postal_code": "12345",
+                    "postalCode": "Moscow",
                 },
             ],
         ],
