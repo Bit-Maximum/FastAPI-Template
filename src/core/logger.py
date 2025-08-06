@@ -3,7 +3,7 @@
 import logging
 import os
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -151,13 +151,13 @@ def cleanup_old_logs(log_directory: Path, retention_days: int = 7) -> None:
         retention_days: The number of days to retain log files.
             Files older than this will be deleted.
     """
-    threshold = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    threshold = datetime.now(UTC) - timedelta(days=retention_days)
 
     log_file = ""
     error = ""
     try:
         for log_file in log_directory.glob("*.log"):
-            file_time = datetime.fromtimestamp(log_file.stat().st_mtime, tz=timezone.utc)
+            file_time = datetime.fromtimestamp(log_file.stat().st_mtime, tz=UTC)
             if file_time < threshold:
                 log_file.unlink()
                 logging.info("Deleted old log file: %s", log_file)
