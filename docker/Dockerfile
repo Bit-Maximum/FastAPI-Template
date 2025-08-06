@@ -1,5 +1,5 @@
 # Start from a slim version of Python 3.10
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 # Set Python Envs
 ENV HOME=/opt APP_HOME=/opt PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
