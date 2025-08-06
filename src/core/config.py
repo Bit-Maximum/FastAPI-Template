@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     """Represents the configuration settings for the application."""
 
     # CORE SETTINGS
-    SECRET_KEY: str = "HDx09iYK97MzUqezQ8InThpcEBk791oi"
+    SECRET_KEY: str
     ENVIRONMENT: Literal["DEV", "PYTEST", "PREPROD", "PROD"] = "DEV"
     ## BACKEND_CORS_ORIGINS and ALLOWED_HOSTS are a JSON-formatted list of origins
     ## For example: ["http://localhost:4200", "https://myfrontendapp.com"]
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # POSTGRESQL DATABASE
     POSTGRES_SERVER: str = "db"  # The name of the service in the docker-compose file
     POSTGRES_USER: str = "postgres"  # The default username for the PostgreSQL database
-    POSTGRES_PASSWORD: str = "postgres"  # The default password for the PostgreSQL database
+    POSTGRES_PASSWORD: str  # The default password for the PostgreSQL database
     POSTGRES_PORT: int = 5432  # The default port for the PostgreSQL database
     POSTGRES_DB: str = "app-db"  # The default database name for the PostgreSQL database
     SQLALCHEMY_DATABASE_URI: PostgresDsn | None = None
@@ -87,12 +87,12 @@ class Settings(BaseSettings):
         )
 
     # Additional Project Settings
-    BASE_API_PATH: str
-    API_VERSION: str
-    PROJECT_NAME: str
-    PROJECT_DESCRIPTION: str
-    CONTACT_NAME: str
-    CONTACT_EMAIL: str
+    BASE_API_PATH: str = "customer-system"
+    API_VERSION: str = "1.0.0"
+    PROJECT_NAME: str = "Customer System"
+    PROJECT_DESCRIPTION: str = "Customer API - System Layer"
+    CONTACT_NAME: str = "John Doe"
+    CONTACT_EMAIL: str = "john.doe@email.com"
 
     class Config:
         """Configuration for the settings class."""
