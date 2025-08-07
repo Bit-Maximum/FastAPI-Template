@@ -45,14 +45,13 @@ lint.ignore = [
     "D212",
     "E203",
     "E266",
-    "ANN101",
-    "ANN102",
     "ANN204",
     "S602",
     "ERA001",
     "PLR0913",
     "N803",
     "N815",
+    "UP046",
 ]
 target-version = "py313"
 line-length = 100
