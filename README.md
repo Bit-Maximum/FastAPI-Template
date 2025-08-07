@@ -98,7 +98,7 @@ Also, you can use the `docker-compose` to start the application with the followi
 
 ```bash
 cd docker
-docker-compose up
+docker-compose --env-file ../src/.env up
 ```
 
 If you don't know how to use Docker, you can check the [Docker documentation](https://docs.docker.com/get-started/) and our [deployment documentation](docs/deployment.md).
