@@ -4,70 +4,112 @@ services:
       context: ../
       dockerfile: docker/Dockerfile
     container_name: app
-    restart: unless-stopped
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn src.app:app --host 0.0.0.0 --port 8000'
+    command: bash -c 'wait-for-it.sh db:5432 -s --timeout=20 -- uvicorn src.app:app --host 0.0.0.0 --port 8000'
     env_file:
       - ../src/.env
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     networks:
       - app-network
     volumes:
-      - ./logs:/opt/logs/
+      - ../src/${APP_LOG_DIR}:/opt/${APP_LOG_DIR}/
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: curl --fail http://localhost:8000/health-check || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
 
   db:
     image: postgres
     container_name: app-db
-    restart: unless-stopped
     env_file:
       - ../src/.env
     environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # should match dbdata volume
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-app_db}
-    volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
     networks:
       - app-network
+    volumes:
+      - ../src/dbdata:/var/lib/postgresql/data/pgdata
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4
+    container_name: app-pgadmin
+    env_file:
+      - ../src/.env
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-admin}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=False
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
-    networks:
-      - app-network
-    depends_on:
-      - db
     ports:
       - "5050:80"
-    entrypoint: /bin/sh -c "chmod 600 /pgpass; /entrypoint.sh;"
     user: root
+    # require sudo privileges to run chmod on /pgpass
+    entrypoint: /bin/sh -c "chmod 600 /pgpass; /entrypoint.sh;"
+    # see https://www.postgresql.org/docs/current/libpq-pgpass.html
     configs:
       - source: servers.json
         target: /pgadmin4/servers.json
       - source: pgpass
         target: /pgpass
+    networks:
+      - app-network
+    depends_on:
+      - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: docker-autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_INTERVAL=30
+      - AUTOHEAL_START_PERIOD=60
+    restart: always
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 configs:
   pgpass:
-    content: db:5432:*:postgres:postgres
+    content: ${POSTGRES_SERVER}:${POSTGRES_PORT}:*:${POSTGRES_USER}:${POSTGRES_PASSWORD}
   servers.json:
     content: |
-      {"Servers": {"1": {
-        "Group": "Servers",
-        "Name": "app_server",
-        "Host": "db",
-        "Port": 5432,
-        "MaintenanceDB": "postgres",
-        "Username": "postgres",
-        "PassFile": "/pgpass",
-        "SSLMode": "prefer"
+      {
+        "Servers": {"1": {
+          "Group": "Servers",
+          "Name": "${PROJECT_NAME}",
+          "Host": "${POSTGRES_SERVER}",
+          "Port": ${POSTGRES_PORT},
+          "MaintenanceDB": "${POSTGRES_DB}",
+          "Username": "${POSTGRES_USER}",
+          "PassFile": "/pgpass",
+          "ConnectionParameters": {
+            "sslmode": "prefer",
+            "connect_timeout": 10
+          }
       }}}
 
 networks:
@@ -75,5 +117,5 @@ networks:
     driver: bridge
     name: app-network
 volumes:
-  app-db-data:
+  dbdata:
   logs:
