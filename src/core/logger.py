@@ -13,6 +13,8 @@ from asgi_correlation_id import CorrelationIdFilter
 
 from src.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 class LogLevelColor(Enum):
     """Mapping of log levels to ANSI escape codes for colored output."""
@@ -111,7 +113,7 @@ def setup_logging() -> None:
     # Calculate the maximum log file size (15% of disk capacity or 4GB, whichever is smaller)
     max_log_size = min(
         0.15 * shutil.disk_usage(log_file_path.parent).total,
-        4 * 1024 * 1024 * 1024,
+        4 * 1024 * 1024 * 1024,  # 4GB
     )
 
     # Create a RotatingFileHandler with log rotation based on size
@@ -154,15 +156,14 @@ def cleanup_old_logs(log_directory: Path, retention_days: int = 7) -> None:
     threshold = datetime.now(UTC) - timedelta(days=retention_days)
 
     log_file = ""
-    error = ""
     try:
         for log_file in log_directory.glob("*.log"):
             file_time = datetime.fromtimestamp(log_file.stat().st_mtime, tz=UTC)
             if file_time < threshold:
                 log_file.unlink()
-                logging.info("Deleted old log file: %s", log_file)
+                logger.info("Deleted old log file: %s", log_file)
     except OSError as error:
-        logging.exception("Failed to delete old log file %s: %s", log_file, error)  # noqa: TRY401
+        logger.exception("Failed to delete old log file %s: %s", log_file, error)  # noqa: TRY401
 
 
 # Optionally, for cleaning temporary directory specifically created for logs:
@@ -170,9 +171,9 @@ def cleanup_temp_log_dir(temp_dir: Path) -> None:
     """Remove a temporary directory used for holding log files, ensuring it's empty."""
     try:
         temp_dir.rmdir()  # Only succeeds if directory is empty
-        logging.info("Removed temporary log directory: %s", temp_dir)
+        logger.info("Removed temporary log directory: %s", temp_dir)
     except OSError as error:
-        logging.exception(
+        logger.exception(
             "Failed to remove temporary directory %s: %s",
             temp_dir,
             error,  # noqa: TRY401
@@ -181,10 +182,10 @@ def cleanup_temp_log_dir(temp_dir: Path) -> None:
 
 if __name__ == "__main__":
     setup_logging()
-    logging.debug("This is a debug message.")
-    logging.info("This is an info message.")
-    logging.warning("This is a warning message.")
-    logging.error("This is an error message.")
-    logging.critical("This is a critical message.")
+    logger.debug("This is a debug message.")
+    logger.info("This is an info message.")
+    logger.warning("This is a warning message.")
+    logger.error("This is an error message.")
+    logger.critical("This is a critical message.")
     log_dir = Path("logs")  # Assuming logs are stored here
     cleanup_old_logs(log_dir, retention_days=7)
